@@ -3,17 +3,27 @@ package biat.learning.springredditclone.services;
 import biat.learning.springredditclone.domain.NotificationEmail;
 import biat.learning.springredditclone.domain.User;
 import biat.learning.springredditclone.domain.VerificationToken;
+import biat.learning.springredditclone.exceptions.SpringRedditException;
 import biat.learning.springredditclone.repositories.UserRepository;
 import biat.learning.springredditclone.repositories.VerificationTokenRepository;
+import biat.learning.springredditclone.security.JwtProvider;
+import biat.learning.springredditclone.web.dto.AuthenticationResponse;
+import biat.learning.springredditclone.web.dto.LoginRequest;
 import biat.learning.springredditclone.web.dto.RegisterRequest;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
-
+@Slf4j
 @Service
 @AllArgsConstructor
 public class AuthService {
@@ -22,6 +32,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final MailService mailService;
+    private final JwtProvider jwtProvider;
+    private final AuthenticationManager authenticationManager;
 
     @Transactional
     public void signup(RegisterRequest registerRequest) {
@@ -55,4 +67,24 @@ public class AuthService {
     }
 
 
+    public void verifyAccount(String token) {
+        Optional<VerificationToken> verificationToken = verificationTokenRepository.findByToken(token);
+        fetchUserAndEnable(verificationToken.orElseThrow(() -> new SpringRedditException("Invalid Token")));
+    }
+    private void fetchUserAndEnable(VerificationToken verificationToken) {
+        String username = verificationToken.getUser().getUsername();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new SpringRedditException("User not found with name - " + username));
+        user.setEnabled(true);
+        userRepository.save(user);
+    }
+
+    public AuthenticationResponse login(LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        log.info("Authentification"+authentication.toString());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String token = jwtProvider.generateToken(authentication);
+        return new AuthenticationResponse(token,loginRequest.getUsername());
+
+    }
 }
