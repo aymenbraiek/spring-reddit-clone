@@ -45,7 +45,7 @@ public class PostService {
     public PostResponseDto getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException(id.toString()));
-        log.info("post"+post.getPostId());
+        log.info("posttest"+post.getUser().getUsername());
         log.info("postToMapperPostResponse"+postMapper.mapToDto(post));
         return postMapper.mapToDto(post);
     }

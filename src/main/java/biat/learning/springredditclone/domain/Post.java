@@ -16,6 +16,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @Data
 public class Post {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postId;
