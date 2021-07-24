@@ -9,6 +9,7 @@ import biat.learning.springredditclone.repositories.VerificationTokenRepository;
 import biat.learning.springredditclone.security.JwtProvider;
 import biat.learning.springredditclone.web.dto.AuthenticationResponse;
 import biat.learning.springredditclone.web.dto.LoginRequest;
+import biat.learning.springredditclone.web.dto.RefreshTokenRequest;
 import biat.learning.springredditclone.web.dto.RegisterRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class AuthService {
     private final MailService mailService;
     private final JwtProvider jwtProvider;
     private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void signup(RegisterRequest registerRequest) {
@@ -88,7 +90,12 @@ public class AuthService {
         log.info("Authentification" + authentication.toString());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtProvider.generateToken(authentication);
-        return new AuthenticationResponse(token, loginRequest.getUsername());
+        return AuthenticationResponse.builder()
+                .authenticationToken(token)
+                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .username(loginRequest.getUsername())
+                .build();
 
     }
 
@@ -99,11 +106,12 @@ public class AuthService {
         return userRepository.findByUsername(principal.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User name not found - " + principal.getUsername()));
     }
+
     public boolean isLoggedIn() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return !(authentication instanceof AnonymousAuthenticationToken) && authentication.isAuthenticated();
     }
-    /*
+
     public AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         refreshTokenService.validateRefreshToken(refreshTokenRequest.getRefreshToken());
         String token = jwtProvider.generateTokenWithUsername(refreshTokenRequest.getUsername());
@@ -113,5 +121,5 @@ public class AuthService {
                 .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
                 .username(refreshTokenRequest.getUsername())
                 .build();
-    }*/
+    }
 }
