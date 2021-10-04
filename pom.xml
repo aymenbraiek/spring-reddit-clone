@@ -14,7 +14,7 @@
     <name>spring-reddit-clone</name>
     <description>Demo project for Spring Boot</description>
     <properties>
-        <java.version>11</java.version>
+        <java.version>1.8</java.version>
         <jsonwebtoken.version>0.11.2</jsonwebtoken.version>
         <mapstruct.version>1.4.2.Final</mapstruct.version>
         <org.lombok.version>1.18.18</org.lombok.version>
@@ -76,8 +76,8 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -148,8 +148,8 @@
                 <version>3.8.0</version>
 
                 <configuration>
-                    <target>11</target>
-                    <source>11</source>
+                    <target>1.8</target>
+                    <source>1.8</source>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
